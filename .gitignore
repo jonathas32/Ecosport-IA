@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+backend/tts_cache/*.mp3
+backend/tts_cache/*.wav
+
+# Os áudios customizados de voz (frontend/voices/custom/) NÃO são
+# ignorados de propósito — eles fazem parte do seu projeto.

@@ -1,0 +1,12 @@
+{
+  "name": "eco-ai",
+  "version": "0.1.0",
+  "description": "Eco - IA de bordo local, com dados reais do veículo via OBD2",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}

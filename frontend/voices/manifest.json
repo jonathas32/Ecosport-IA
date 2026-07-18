@@ -1,0 +1,26 @@
+{
+  "_comentario": "Cada entrada tem 'match' (palavras/trechos que, se aparecerem na resposta do C5, tocam o áudio customizado) e 'file' (o nome do arquivo dentro de voices/custom/). Adicione quantas quiser. A ordem importa: a primeira que bater é usada.",
+
+  "entries": [
+    {
+      "id": "boas_vindas",
+      "match": ["sistema c5 inicializado", "sou o c5"],
+      "file": "boas_vindas.mp3"
+    },
+    {
+      "id": "combustivel_baixo",
+      "match": ["considere abastecer em breve"],
+      "file": "combustivel_baixo.mp3"
+    },
+    {
+      "id": "temperatura_alta",
+      "match": ["está um pouco alta, fique de olho"],
+      "file": "temperatura_alta.mp3"
+    },
+    {
+      "id": "bateria_baixa",
+      "match": ["vale checar a bateria"],
+      "file": "bateria_baixa.mp3"
+    }
+  ]
+}

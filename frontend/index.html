@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Eco AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===================== HOLOGRAMA (área principal) ===================== -->
+    <main class="hologram-stage">
+      <header class="brand">
+        <div class="brand-mark" id="brandMark"></div>
+        <div class="brand-text">
+          <h1>Eco</h1>
+          <span>Ford EcoSport · IA de bordo</span>
+        </div>
+        <button class="theme-btn" id="themeBtn" title="Alternar modo escuro">
+          <svg viewBox="0 0 24 24" width="17" height="17"><path fill="currentColor" d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+        <button class="settings-btn" id="settingsBtn" title="Configurações de voz">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 00.12-.61l-1.92-3.32a.5.5 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.5.5 0 00-.5-.42h-3.84a.5.5 0 00-.5.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.5.5 0 00-.59.22L1.68 8.87a.5.5 0 00.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.5.5 0 00-.12.61l1.92 3.32c.13.22.39.31.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.47 0 .59-.22l1.92-3.32a.5.5 0 00-.12-.61l-2.03-1.58zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg>
+        </button>
+      </header>
+
+      <div class="settings-panel" id="settingsPanel">
+        <div class="settings-row">
+          <label>Voz</label>
+          <select id="voiceSelect">
+            <option value="pt-BR-AntonioNeural">Antonio (masculina, grave)</option>
+            <option value="pt-BR-FranciscaNeural">Francisca (feminina, suave)</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <label>Efeito robótico</label>
+          <input type="checkbox" id="robotToggle" checked />
+        </div>
+        <div class="settings-row">
+          <label>Ativação por voz (diga "Eco")</label>
+          <input type="checkbox" id="wakeWordToggle" />
+        </div>
+        <button class="test-voice-btn" id="testVoiceBtn">▶ Testar voz</button>
+      </div>
+
+      <div class="core-stage">
+        <canvas class="sphere-canvas" id="sphereCanvas"></canvas>
+        <div class="core-label">
+          <span class="core-rpm" id="coreRpmLabel">—</span>
+          <span class="core-rpm-unit">RPM</span>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <div class="link-status">
+          <span class="dot" id="obdDot"></span>
+          <span id="obdStatusText">Conectando ao OBD2…</span>
+        </div>
+        <div class="link-status" id="wakeStatusRow" style="display:none;">
+          <span class="dot listening-dot" id="wakeDot"></span>
+          <span id="wakeStatusText">Aguardando "Eco"…</span>
+        </div>
+      </div>
+
+      <section class="gauges">
+        <div class="gauge" data-metric="speed_kmh">
+          <span class="gauge-label">Velocidade</span>
+          <span class="gauge-value"><b id="g-speed">0</b> km/h</span>
+        </div>
+        <div class="gauge" data-metric="engine_temp_c">
+          <span class="gauge-label">Motor</span>
+          <span class="gauge-value"><b id="g-temp">--</b> °C</span>
+        </div>
+        <div class="gauge" data-metric="fuel_percent">
+          <span class="gauge-label">Combustível</span>
+          <span class="gauge-value"><b id="g-fuel">--</b> %</span>
+        </div>
+        <div class="gauge" data-metric="throttle_percent">
+          <span class="gauge-label">Acelerador</span>
+          <span class="gauge-value"><b id="g-throttle">--</b> %</span>
+        </div>
+        <div class="gauge" data-metric="battery_v">
+          <span class="gauge-label">Bateria</span>
+          <span class="gauge-value"><b id="g-battery">--</b> V</span>
+        </div>
+        <div class="gauge" data-metric="engine_load_percent">
+          <span class="gauge-label">Carga do motor</span>
+          <span class="gauge-value"><b id="g-load">--</b> %</span>
+        </div>
+        <div class="gauge" data-metric="intake_temp_c">
+          <span class="gauge-label">Ar admissão</span>
+          <span class="gauge-value"><b id="g-intake">--</b> °C</span>
+        </div>
+        <div class="gauge" data-metric="maf_gs">
+          <span class="gauge-label">Fluxo de ar</span>
+          <span class="gauge-value"><b id="g-maf">--</b> g/s</span>
+        </div>
+        <div class="gauge" data-metric="o2_voltage_v">
+          <span class="gauge-label">Sonda lambda</span>
+          <span class="gauge-value"><b id="g-o2">--</b> V</span>
+        </div>
+        <div class="gauge" data-metric="mil_on">
+          <span class="gauge-label">Falhas (DTC)</span>
+          <span class="gauge-value" id="g-dtc-wrap"><b id="g-dtc">OK</b></span>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <img
+          id="brandLogo"
+          class="brand-logo-corner"
+          src="assets/ford-logo.png"
+          alt="Ford"
+          onerror="this.style.display='none'"
+        />
+        <span>Criado por Jonathas Benevides</span>
+      </footer>
+    </main>
+
+    <!-- ===================== CHAT (painel lateral, compacto) ===================== -->
+    <aside class="chat-panel">
+      <div class="chat" id="chatLog"></div>
+
+      <div class="quick-actions">
+        <button class="chip" data-prompt="Como está o status do carro?">Status</button>
+        <button class="chip" data-prompt="Tem algum código de falha?">Falhas</button>
+        <button class="chip" data-prompt="Quais as notícias de hoje?">Notícias</button>
+        <button class="chip" data-prompt="Como está o trânsito agora?">Trânsito</button>
+        <button class="chip" data-prompt="Vai chover hoje?">Tempo</button>
+      </div>
+
+      <form class="composer" id="composerForm">
+        <button type="button" class="mic-btn" id="micBtn" title="Falar com o Eco">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.92V21h2v-3.08A7 7 0 0019 11h-2z"/></svg>
+        </button>
+        <input type="text" id="textInput" placeholder="Pergunte ao Eco…" autocomplete="off" />
+        <button type="submit" class="send-btn" title="Enviar">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg>
+        </button>
+      </form>
+    </aside>
+  </div>
+
+  <script src="sphere.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
