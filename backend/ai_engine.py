@@ -8,8 +8,8 @@ internet. Elas são respondidas na hora, localmente, usando os dados que o
 obd_reader.py já leu do veículo.
 
 Qualquer outra pergunta (notícias, clima, trânsito, perguntas gerais tipo
-ChatGPT) é enviada para a Claude (Anthropic), usando a ferramenta de busca
-na web dela — assim a própria Claude já busca informação atualizada na
+ChatGPT) é enviada pra API da OpenAI (ChatGPT), com a ferramenta de busca
+na web dela ligada — assim ela mesma já busca informação atualizada na
 internet sem precisarmos integrar mais nenhuma outra API.
 """
 
@@ -25,15 +25,15 @@ load_dotenv()
 
 logger = logging.getLogger("c5.ai_engine")
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 try:
-    import anthropic
-    ANTHROPIC_AVAILABLE = True
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
 except ImportError:
-    ANTHROPIC_AVAILABLE = False
-    logger.warning("biblioteca anthropic não instalada. Rode: pip install -r requirements.txt")
+    OPENAI_AVAILABLE = False
+    logger.warning("biblioteca openai não instalada. Rode: pip install -r requirements.txt")
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +198,7 @@ def answer_car_question(text: str, snapshot: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 3. Resposta via Claude/Anthropic (internet) para perguntas gerais
+# 3. Resposta via OpenAI (ChatGPT) (internet) para perguntas gerais
 # ---------------------------------------------------------------------------
 
 _client = None
@@ -206,8 +206,8 @@ _client = None
 
 def _get_client():
     global _client
-    if _client is None and ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
-        _client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    if _client is None and OPENAI_AVAILABLE and OPENAI_API_KEY:
+        _client = OpenAI(api_key=OPENAI_API_KEY)
     return _client
 
 
@@ -226,21 +226,19 @@ def answer_general_question(text: str) -> str:
     client = _get_client()
     if client is None:
         return ("Ainda não consigo acessar a internet — falta configurar a "
-                "chave da Anthropic no arquivo .env (ANTHROPIC_API_KEY).")
+                "chave da OpenAI no arquivo .env (OPENAI_API_KEY).")
 
     try:
-        response = client.messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=500,
-            system=SYSTEM_PROMPT,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": text}],
+        response = client.responses.create(
+            model=OPENAI_MODEL,
+            instructions=SYSTEM_PROMPT,
+            input=text,
+            tools=[{"type": "web_search_preview"}],
         )
-        text_parts = [block.text for block in response.content if getattr(block, "type", None) == "text"]
-        answer = " ".join(text_parts).strip()
+        answer = (response.output_text or "").strip()
         return answer or "Não consegui formular uma resposta agora."
     except Exception as e:
-        logger.error(f"Erro ao consultar a Claude: {e}")
+        logger.error(f"Erro ao consultar o ChatGPT: {e}")
         return "Tive um problema para buscar essa informação na internet agora."
 
 
