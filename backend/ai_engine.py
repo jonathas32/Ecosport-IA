@@ -8,9 +8,9 @@ internet. Elas são respondidas na hora, localmente, usando os dados que o
 obd_reader.py já leu do veículo.
 
 Qualquer outra pergunta (notícias, clima, trânsito, perguntas gerais tipo
-ChatGPT) é enviada para o Gemini, com "Grounding no Google Search" ligado
-— assim o próprio Gemini já busca informação atualizada na internet sem
-precisarmos integrar mais nenhuma outra API.
+ChatGPT) é enviada para a Claude (Anthropic), usando a ferramenta de busca
+na web dela — assim a própria Claude já busca informação atualizada na
+internet sem precisarmos integrar mais nenhuma outra API.
 """
 
 import os
@@ -25,16 +25,15 @@ load_dotenv()
 
 logger = logging.getLogger("c5.ai_engine")
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
 try:
-    from google import genai
-    from google.genai import types
-    GENAI_AVAILABLE = True
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
 except ImportError:
-    GENAI_AVAILABLE = False
-    logger.warning("google-genai não instalado. Rode: pip install -r requirements.txt")
+    ANTHROPIC_AVAILABLE = False
+    logger.warning("biblioteca anthropic não instalada. Rode: pip install -r requirements.txt")
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +198,7 @@ def answer_car_question(text: str, snapshot: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 3. Resposta via Gemini (internet) para perguntas gerais
+# 3. Resposta via Claude/Anthropic (internet) para perguntas gerais
 # ---------------------------------------------------------------------------
 
 _client = None
@@ -207,8 +206,8 @@ _client = None
 
 def _get_client():
     global _client
-    if _client is None and GENAI_AVAILABLE and GEMINI_API_KEY:
-        _client = genai.Client(api_key=GEMINI_API_KEY)
+    if _client is None and ANTHROPIC_AVAILABLE and ANTHROPIC_API_KEY:
+        _client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     return _client
 
 
@@ -218,7 +217,8 @@ SYSTEM_PROMPT = (
     "Responda em português do Brasil, de forma natural, curta e objetiva "
     "(o motorista está ouvindo a resposta em voz, não lendo). "
     "Se a pergunta for sobre notícias, trânsito ou previsão do tempo, use "
-    "informação atual e real. Evite respostas longas demais."
+    "informação atual e real, buscando na web quando precisar. Evite "
+    "respostas longas demais."
 )
 
 
@@ -226,21 +226,21 @@ def answer_general_question(text: str) -> str:
     client = _get_client()
     if client is None:
         return ("Ainda não consigo acessar a internet — falta configurar a "
-                "chave do Gemini no arquivo .env (GEMINI_API_KEY).")
+                "chave da Anthropic no arquivo .env (ANTHROPIC_API_KEY).")
 
     try:
-        grounding_tool = types.Tool(google_search=types.GoogleSearch())
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=text,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                tools=[grounding_tool],
-            ),
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=500,
+            system=SYSTEM_PROMPT,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": text}],
         )
-        return response.text.strip()
+        text_parts = [block.text for block in response.content if getattr(block, "type", None) == "text"]
+        answer = " ".join(text_parts).strip()
+        return answer or "Não consegui formular uma resposta agora."
     except Exception as e:
-        logger.error(f"Erro ao consultar o Gemini: {e}")
+        logger.error(f"Erro ao consultar a Claude: {e}")
         return "Tive um problema para buscar essa informação na internet agora."
 
 
