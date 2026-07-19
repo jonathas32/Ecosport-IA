@@ -256,15 +256,16 @@ html, body {
 
 .core-stage {
   position: relative;
-  width: min(78vh, 620px);
-  aspect-ratio: 4 / 3;
+  width: min(85vh, 680px);
+  aspect-ratio: 16 / 9;
   margin: 4px auto 0;
-  border-radius: 28px;
+  border-radius: 20px;
   background: radial-gradient(circle at 50% 55%, var(--panel-bg-alt) 0%, var(--bg-base) 68%, transparent 78%);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.robot-face-wrap {
+.robot-video-wrap {
   position: absolute;
   inset: 0;
   display: flex;
@@ -272,33 +273,13 @@ html, body {
   justify-content: center;
 }
 
-.robot-face-stack {
-  position: relative;
-  max-width: 92%;
-  max-height: 92%;
-  transition: filter 0.15s ease-out;
-}
-
-.robot-face-img {
-  display: block;
+.robot-canvas {
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
-  opacity: 0;
-  transition: opacity 0.05s linear;
-}
-
-.robot-face-img.frame-mid,
-.robot-face-img.frame-open {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-}
-
-.robot-face-img.active {
-  opacity: 1;
+  transition: filter 0.15s ease-out;
 }
 
 /* ---------------- Tela de abertura (vídeo do robô) ---------------- */
