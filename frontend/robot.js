@@ -1,42 +1,70 @@
 /* robot.js
- * O "rosto" do Eco: a imagem do robô (fundo removido), com uma leve
- * respiração/pulso reagindo ao RPM, e um brilho na região da boca que
- * pulsa enquanto o Eco está falando — uma aproximação simples de "boca
- * mexendo", já que trabalhamos com uma imagem estática (não é lip-sync
- * de verdade quadro a quadro, mas dá a sensação de estar "vivo" falando).
+ * O "rosto" do Eco: a imagem do robô (fundo removido), agora com
+ * LIP-SYNC de verdade — 3 quadros da boca (fechada, meio aberta,
+ * aberta) trocando enquanto ele fala, além de respirar/pulsar
+ * reagindo ao RPM do carro.
  */
 
 window.C5Orb = (function () {
-  let wrap, img, mouthGlow;
+  let wrap;
+  let frames = {};
+  let currentFrame = "closed";
   let rpmRatio = 0;
   let speaking = false;
+  let talkLoopHandle = null;
+
+  const MOUTH_FRAMES = ["closed", "mid", "open"];
 
   function init(el) {
     wrap = el;
     wrap.innerHTML = `
-      <img src="assets/robot-face.png" class="robot-face-img" id="robotFaceImg" alt="Eco" />
-      <div class="mouth-glow" id="mouthGlow"></div>
+      <div class="robot-face-stack">
+        <img src="assets/robot-mouth-closed.png" class="robot-face-img frame-closed active" alt="Eco" />
+        <img src="assets/robot-mouth-mid.png" class="robot-face-img frame-mid" alt="" />
+        <img src="assets/robot-mouth-open.png" class="robot-face-img frame-open" alt="" />
+      </div>
     `;
-    img = wrap.querySelector(".robot-face-img");
-    mouthGlow = wrap.querySelector(".mouth-glow");
+    frames.closed = wrap.querySelector(".frame-closed");
+    frames.mid = wrap.querySelector(".frame-mid");
+    frames.open = wrap.querySelector(".frame-open");
+
     animate();
+  }
+
+  function showFrame(name) {
+    if (name === currentFrame) return;
+    currentFrame = name;
+    MOUTH_FRAMES.forEach((f) => frames[f].classList.toggle("active", f === name));
+  }
+
+  function talkLoop() {
+    if (!speaking) {
+      showFrame("closed");
+      talkLoopHandle = null;
+      return;
+    }
+    // Escolhe o próximo quadro da boca de forma pseudo-aleatória, com
+    // leve tendência a "fechada" de vez em quando (dá o efeito de sílaba)
+    const roll = Math.random();
+    const next = roll < 0.2 ? "closed" : roll < 0.6 ? "mid" : "open";
+    showFrame(next);
+    talkLoopHandle = setTimeout(talkLoop, 90 + Math.random() * 90);
   }
 
   function animate() {
     requestAnimationFrame(animate);
-    if (!img) return;
+    if (!wrap) return;
 
     const t = performance.now() * 0.001;
     const breatheSpeed = speaking ? 5 : 1.1 + rpmRatio * 2.5;
-    const breatheAmount = speaking ? 0.015 : 0.008 + rpmRatio * 0.02;
+    const breatheAmount = speaking ? 0.012 : 0.008 + rpmRatio * 0.02;
     const pulse = 1 + breatheAmount * Math.sin(t * breatheSpeed);
-    img.style.transform = `scale(${pulse})`;
 
     const brightness = 1 + rpmRatio * 0.15;
-    img.style.filter = `brightness(${brightness}) drop-shadow(0 0 22px rgba(var(--accent-rgb), 0.35))`;
-
-    if (mouthGlow) {
-      mouthGlow.classList.toggle("active", speaking);
+    const stack = wrap.querySelector(".robot-face-stack");
+    if (stack) {
+      stack.style.transform = `scale(${pulse})`;
+      stack.style.filter = `brightness(${brightness}) drop-shadow(0 0 22px rgba(var(--accent-rgb), 0.35))`;
     }
   }
 
@@ -47,10 +75,15 @@ window.C5Orb = (function () {
     },
     setSpeaking(isSpeaking) {
       speaking = isSpeaking;
+      if (speaking && !talkLoopHandle) {
+        talkLoop();
+      } else if (!speaking) {
+        showFrame("closed");
+      }
     },
     setTheme() {
-      // A imagem do robô não muda de cor com o tema (mantém as cores
-      // originais dele); só o brilho ao redor acompanha o tema, via CSS.
+      // A imagem do robô mantém as cores originais; só o brilho ao
+      // redor acompanha o tema, via CSS (--accent-rgb).
     },
   };
 })();

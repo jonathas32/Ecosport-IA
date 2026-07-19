@@ -272,36 +272,33 @@ html, body {
   justify-content: center;
 }
 
-.robot-face-img {
+.robot-face-stack {
+  position: relative;
   max-width: 92%;
   max-height: 92%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
   transition: filter 0.15s ease-out;
 }
 
-.mouth-glow {
-  position: absolute;
-  left: 50%;
-  top: 47%;
-  width: 26px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.9), transparent 70%);
-  transform: translate(-50%, -50%) scaleY(0.3);
+.robot-face-img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   opacity: 0;
-  pointer-events: none;
+  transition: opacity 0.05s linear;
 }
 
-.mouth-glow.active {
+.robot-face-img.frame-mid,
+.robot-face-img.frame-open {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+.robot-face-img.active {
   opacity: 1;
-  animation: mouth-talk 0.28s ease-in-out infinite alternate;
-}
-
-@keyframes mouth-talk {
-  0%   { transform: translate(-50%, -50%) scaleY(0.3) scaleX(0.85); }
-  100% { transform: translate(-50%, -50%) scaleY(1.1) scaleX(1.1); }
 }
 
 /* ---------------- Tela de abertura (vídeo do robô) ---------------- */
