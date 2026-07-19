@@ -256,21 +256,92 @@ html, body {
 
 .core-stage {
   position: relative;
-  width: min(62vh, 500px);
-  aspect-ratio: 1 / 1;
+  width: min(78vh, 620px);
+  aspect-ratio: 4 / 3;
   margin: 4px auto 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 55%, var(--panel-bg-alt) 0%, var(--bg-base) 68%, transparent 72%);
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 55%, var(--panel-bg-alt) 0%, var(--bg-base) 68%, transparent 78%);
   flex-shrink: 0;
 }
 
-.sphere-canvas {
+.robot-face-wrap {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.robot-face-img {
+  max-width: 92%;
+  max-height: 92%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transition: filter 0.15s ease-out;
+}
+
+.mouth-glow {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 26px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.9), transparent 70%);
+  transform: translate(-50%, -50%) scaleY(0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mouth-glow.active {
+  opacity: 1;
+  animation: mouth-talk 0.28s ease-in-out infinite alternate;
+}
+
+@keyframes mouth-talk {
+  0%   { transform: translate(-50%, -50%) scaleY(0.3) scaleX(0.85); }
+  100% { transform: translate(-50%, -50%) scaleY(1.1) scaleX(1.1); }
+}
+
+/* ---------------- Tela de abertura (vídeo do robô) ---------------- */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease;
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-video {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 22px rgba(var(--accent-rgb), 0.3));
+  object-fit: cover;
 }
+
+.skip-splash-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.skip-splash-btn:hover { background: rgba(255, 255, 255, 0.16); }
 
 .core-label {
   position: absolute;

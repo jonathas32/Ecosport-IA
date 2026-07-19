@@ -7,6 +7,32 @@
 const BACKEND_HTTP = "http://127.0.0.1:8000";
 const BACKEND_WS = "ws://127.0.0.1:8000/ws/telemetry";
 
+// ---------------------------------------------------------------------
+// 0. Tela de abertura: toca o vídeo do robô, depois libera o app
+// ---------------------------------------------------------------------
+const splashScreen = document.getElementById("splashScreen");
+const splashVideo = document.getElementById("splashVideo");
+const skipSplashBtn = document.getElementById("skipSplashBtn");
+
+function dismissSplash() {
+  if (!splashScreen || splashScreen.classList.contains("fade-out")) return;
+  splashScreen.classList.add("fade-out");
+  setTimeout(() => splashScreen.remove(), 650);
+}
+
+if (splashVideo) {
+  splashVideo.addEventListener("ended", dismissSplash);
+  // Alguns navegadores/Electron bloqueiam autoplay com som; se falhar,
+  // toca sem som em vez de travar a tela de abertura.
+  splashVideo.play().catch(() => {
+    splashVideo.muted = true;
+    splashVideo.play().catch(() => dismissSplash());
+  });
+}
+if (skipSplashBtn) {
+  skipSplashBtn.addEventListener("click", dismissSplash);
+}
+
 // Contexto de áudio único, compartilhado pela voz do C5 e pela trilha de
 // suspense do modo escuro
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();

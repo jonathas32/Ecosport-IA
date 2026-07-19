@@ -6,6 +6,11 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="splashScreen" class="splash-screen">
+    <video id="splashVideo" class="splash-video" src="assets/intro-robot.mp4" autoplay playsinline></video>
+    <button id="skipSplashBtn" class="skip-splash-btn">Pular ▸</button>
+  </div>
+
   <div class="app">
 
     <!-- ===================== HOLOGRAMA (área principal) ===================== -->
@@ -44,7 +49,7 @@
       </div>
 
       <div class="core-stage">
-        <canvas class="sphere-canvas" id="sphereCanvas"></canvas>
+        <div class="robot-face-wrap" id="sphereCanvas"></div>
         <div class="core-label">
           <span class="core-rpm" id="coreRpmLabel">—</span>
           <span class="core-rpm-unit">RPM</span>
@@ -141,7 +146,7 @@
     </aside>
   </div>
 
-  <script src="sphere.js"></script>
+  <script src="robot.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>
