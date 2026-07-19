@@ -123,4 +123,9 @@ async def transcribe_audio(audio: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    # reload=True cria DOIS processos (um vigia o código, outro roda de
+    # verdade) — e os dois tentam abrir a porta COM do OBD2 ao mesmo
+    # tempo, o que trava a conexão real. Por isso fica desligado por
+    # padrão; só ligue (C5_DEV_RELOAD=1) se estiver editando o código.
+    dev_reload = os.getenv("C5_DEV_RELOAD", "0") == "1"
+    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=dev_reload)
