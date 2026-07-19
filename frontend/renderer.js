@@ -149,7 +149,7 @@ async function askC5(text) {
       body: JSON.stringify({ text }),
     });
     const data = await res.json();
-    const sourceTag = data.source === "local" ? "Dados do veículo · local" : "Internet · Gemini";
+    const sourceTag = data.source === "local" ? "Dados do veículo · local" : "Internet";
     addMessage(data.answer, "c5", sourceTag);
     speak(data.answer);
   } catch (err) {
@@ -558,9 +558,26 @@ function extractCommandAfterWakeWord(transcript) {
   const lower = transcript.toLowerCase();
   for (const w of WAKE_WORDS) {
     const idx = lower.indexOf(w);
-    if (idx !== -1) {
-      return transcript.slice(idx + w.length).trim();
+    if (idx === -1) continue;
+
+    let rest = transcript.slice(idx + w.length);
+
+    // Limpa pontuação/espaços soltos e remove repetições da própria
+    // palavra de ativação (ex: "eco, eco, eco." -> ""), pra não tratar
+    // isso como se fosse um comando de verdade.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      rest = rest.replace(/^[\s,.\-!?]+/, "");
+      for (const w2 of WAKE_WORDS) {
+        if (rest.toLowerCase().startsWith(w2)) {
+          rest = rest.slice(w2.length);
+          changed = true;
+        }
+      }
     }
+
+    return rest.trim();
   }
   return null;
 }

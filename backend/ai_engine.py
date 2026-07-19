@@ -47,7 +47,7 @@ CAR_KEYWORDS = [
     "carga do motor", "sonda lambda", "sonda", "o2", "trim de combust",
     "fluxo de ar", "maf", "ar de admissão", "temperatura do ar",
     "código de falha", "codigo de falha", "falha", "erro do motor",
-    "dtc", "luz de injeção", "luz da injeção", "check engine",
+    "dtc", "luz de injeção", "luz da injeção", "check engine", "status",
 ]
 
 DATETIME_KEYWORDS = [
