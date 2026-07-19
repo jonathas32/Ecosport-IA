@@ -127,5 +127,15 @@ if __name__ == "__main__":
     # verdade) — e os dois tentam abrir a porta COM do OBD2 ao mesmo
     # tempo, o que trava a conexão real. Por isso fica desligado por
     # padrão; só ligue (C5_DEV_RELOAD=1) se estiver editando o código.
+    #
+    # Importante: com reload precisa passar "app:app" como texto (pro
+    # uvicorn recarregar o arquivo sozinho quando mudar), mas isso faz
+    # o Python importar este arquivo DUAS VEZES (uma como programa
+    # principal, outra pelo nome "app") quando reload está desligado —
+    # o que conectava no carro duas vezes. Por isso, sem reload, passamos
+    # o "app" já carregado direto, sem reimportar.
     dev_reload = os.getenv("C5_DEV_RELOAD", "0") == "1"
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=dev_reload)
+    if dev_reload:
+        uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    else:
+        uvicorn.run(app, host="127.0.0.1", port=8000)
