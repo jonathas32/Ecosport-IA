@@ -257,7 +257,7 @@ def answer_general_question(text: str) -> str:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": text},
             ],
-            max_tokens=400,
+            max_tokens=150,
         )
         answer = (response.choices[0].message.content or "").strip()
         return answer or "Não consegui formular uma resposta agora."
