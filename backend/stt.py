@@ -49,7 +49,7 @@ def transcribe(audio_bytes: bytes, suffix: str = ".webm") -> str:
     # "Dica" de vocabulário: ajuda o Whisper a acertar nomes e termos
     # específicos deste app, que ele não conheceria de outra forma.
     vocab_hint = (
-        "C5, Citroën, OBD2, RPM, Hydractive, Jonathas, Jordania, Luna, Lara, "
+        "Eco, Ford, EcoSport, OBD2, RPM, Jonathas, Jordania, Luna, Lara, "
         "Dona Ana, Nivaldo, sonda lambda, combustível, câmbio, motor."
     )
 

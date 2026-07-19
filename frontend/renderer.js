@@ -529,7 +529,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // e transcrevendo cada bloco localmente, procurando a palavra "C5".
 // Isso tem um pequeno atraso (o tamanho do bloco) comparado a um
 // assistente tipo Alexa de verdade, mas funciona 100% offline.
-const WAKE_WORDS = ["eco", "ei eco", "oi eco", "ok eco"];
+const WAKE_WORDS = ["eco", "ico", "êco", "hico", "ei eco", "oi eco", "ok eco", "ei ico", "oi ico"];
 const WAKE_CHUNK_MS = 3500;
 
 const wakeStatusRow = document.getElementById("wakeStatusRow");
