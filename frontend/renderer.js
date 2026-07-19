@@ -449,9 +449,21 @@ let isRecording = false;
 
 async function getMicStream() {
   if (micStream) return micStream;
-  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  micStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+    },
+  });
   return micStream;
 }
+
+// Bitrate mais alto pra não perder qualidade da fala na compressão
+// (o padrão do navegador costuma ser baixo demais pra reconhecimento
+// de voz com boa precisão)
+const RECORDER_OPTIONS = { audioBitsPerSecond: 128000 };
 
 async function transcribeBlob(blob) {
   const form = new FormData();
@@ -466,7 +478,7 @@ async function recordFor(milliseconds) {
   // Grava por um período fixo e devolve o Blob resultante. Usado tanto
   // pelo botão de microfone (push-to-talk) quanto pela escuta contínua.
   const stream = await getMicStream();
-  const recorder = new MediaRecorder(stream);
+  const recorder = new MediaRecorder(stream, RECORDER_OPTIONS);
   const chunks = [];
   recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -491,7 +503,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       micBtn.classList.add("listening");
       const stream = await getMicStream();
       const chunks = [];
-      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder = new MediaRecorder(stream, RECORDER_OPTIONS);
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
       mediaRecorder.onstop = async () => {
         isRecording = false;
