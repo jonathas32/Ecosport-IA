@@ -11,11 +11,12 @@ window.C5Orb = (function () {
   let speaking = false;
   let ready = false;
 
-  // Detecta o verde por DOMINÂNCIA (o quanto o canal verde se destaca
-  // dos outros dois), em vez de distância de cor fixa — isso evita
-  // remover partes ciano/azuis do próprio robô por engano.
-  const DOM_TRANSPARENT = 28; // dominância acima disso = 100% transparente
-  const DOM_OPAQUE = 6;       // dominância abaixo disso = 100% opaco
+  // Cor aproximada do fundo verde do vídeo (ajustada pra esse material
+  // específico). Se um dia trocar o vídeo por outro com um verde
+  // diferente, é só ajustar esses valores.
+  const KEY_R = 42, KEY_G = 155, KEY_B = 54;
+  const THRESHOLD = 70; // quão parecido com o verde precisa ser pra virar transparente
+  const SOFT_EDGE = 40; // faixa de transição suave (anti-serrilhado)
 
   function init(el) {
     wrap = el;
@@ -48,17 +49,11 @@ window.C5Orb = (function () {
 
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i], g = data[i + 1], b = data[i + 2];
-      const maxRB = r > b ? r : b;
-      const dominance = g - maxRB;
-
-      if (dominance >= DOM_TRANSPARENT) {
+      const dist = Math.sqrt((r - KEY_R) ** 2 + (g - KEY_G) ** 2 + (b - KEY_B) ** 2);
+      if (dist < THRESHOLD) {
         data[i + 3] = 0;
-      } else if (dominance > DOM_OPAQUE) {
-        const t = (dominance - DOM_OPAQUE) / (DOM_TRANSPARENT - DOM_OPAQUE);
-        data[i + 3] = 255 * (1 - t);
-        // despill: reduz o verde residual nos pixels de borda, pra não
-        // deixar uma franja esverdeada
-        data[i + 1] = g - (g - maxRB) * t;
+      } else if (dist < THRESHOLD + SOFT_EDGE) {
+        data[i + 3] = ((dist - THRESHOLD) / SOFT_EDGE) * 255;
       }
     }
     ctx.putImageData(frame, 0, 0);
