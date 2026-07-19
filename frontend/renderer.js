@@ -531,6 +531,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 // assistente tipo Alexa de verdade, mas funciona 100% offline.
 const WAKE_WORDS = ["eco", "ico", "êco", "hico", "ei eco", "oi eco", "ok eco", "ei ico", "oi ico"];
 const WAKE_CHUNK_MS = 3500;
+const COMMAND_CHUNK_MS = 5500; // mais tempo pra capturar frases maiores
 
 const wakeStatusRow = document.getElementById("wakeStatusRow");
 const wakeDot = document.getElementById("wakeDot");
@@ -569,7 +570,11 @@ async function wakeListenLoop() {
       continue;
     }
     try {
-      const blob = await recordFor(WAKE_CHUNK_MS);
+      // Enquanto só está esperando ouvir "Eco", grava blocos curtos (mais
+      // responsivo). Depois que ouviu a palavra, grava um bloco mais
+      // longo pro comando de verdade, pra não cortar frases maiores.
+      const chunkDuration = awaitingCommand ? COMMAND_CHUNK_MS : WAKE_CHUNK_MS;
+      const blob = await recordFor(chunkDuration);
       if (!wakeShouldRun) break;
       const transcript = await transcribeBlob(blob);
       if (!transcript) continue;
