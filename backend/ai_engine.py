@@ -7,10 +7,9 @@ Regra de ouro do projeto: perguntas sobre o CARRO nunca dependem de
 internet. Elas são respondidas na hora, localmente, usando os dados que o
 obd_reader.py já leu do veículo.
 
-Qualquer outra pergunta (notícias, clima, trânsito, perguntas gerais tipo
-ChatGPT) é enviada pra API da OpenAI (ChatGPT), com a ferramenta de busca
-na web dela ligada — assim ela mesma já busca informação atualizada na
-internet sem precisarmos integrar mais nenhuma outra API.
+Qualquer outra pergunta (perguntas gerais tipo ChatGPT) é respondida por um
+LLM local (Ollama, de graça, sem internet) por padrão. Também dá pra trocar
+pra nuvem (OpenAI) via variável de ambiente, se preferir.
 """
 
 import os
@@ -24,6 +23,14 @@ import small_talk
 load_dotenv()
 
 logger = logging.getLogger("c5.ai_engine")
+
+# Modo do "cérebro" pra perguntas gerais: "local" (Ollama, de graça, sem
+# internet) ou "cloud" (OpenAI, precisa de crédito cadastrado). Padrão é
+# local, pra não depender mais de cota/cartão de crédito.
+AI_PROVIDER = os.getenv("AI_PROVIDER", "local")
+
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -198,7 +205,7 @@ def answer_car_question(text: str, snapshot: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 3. Resposta via OpenAI (ChatGPT) (internet) para perguntas gerais
+# 3. Resposta via LLM (local com Ollama, ou nuvem com OpenAI) para perguntas gerais
 # ---------------------------------------------------------------------------
 
 _client = None
@@ -206,7 +213,16 @@ _client = None
 
 def _get_client():
     global _client
-    if _client is None and OPENAI_AVAILABLE and OPENAI_API_KEY:
+    if _client is not None:
+        return _client
+    if not OPENAI_AVAILABLE:
+        return None
+
+    if AI_PROVIDER == "local":
+        # Ollama expõe uma API compatível com a da OpenAI, rodando local.
+        # A "chave" aqui não é checada de verdade, só precisa não ser vazia.
+        _client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama-local")
+    elif OPENAI_API_KEY:
         _client = OpenAI(api_key=OPENAI_API_KEY)
     return _client
 
@@ -216,29 +232,39 @@ SYSTEM_PROMPT = (
     "Foi criado pelo Jonathas para ajudar e apoiar a família dele. "
     "Responda em português do Brasil, de forma natural, curta e objetiva "
     "(o motorista está ouvindo a resposta em voz, não lendo). "
-    "Se a pergunta for sobre notícias, trânsito ou previsão do tempo, use "
-    "informação atual e real, buscando na web quando precisar. Evite "
-    "respostas longas demais."
+    "Você NÃO tem acesso à internet em tempo real — se perguntarem sobre "
+    "notícias, trânsito, previsão do tempo ou qualquer evento atual, diga "
+    "claramente que não tem essa informação agora, em vez de inventar uma "
+    "resposta. Evite respostas longas demais."
 )
 
 
 def answer_general_question(text: str) -> str:
     client = _get_client()
     if client is None:
+        if AI_PROVIDER == "local":
+            return ("Não consegui falar com o modelo local — o Ollama está "
+                    "rodando? (veja o README para instalar)")
         return ("Ainda não consigo acessar a internet — falta configurar a "
                 "chave da OpenAI no arquivo .env (OPENAI_API_KEY).")
 
+    model = OLLAMA_MODEL if AI_PROVIDER == "local" else OPENAI_MODEL
+
     try:
-        response = client.responses.create(
-            model=OPENAI_MODEL,
-            instructions=SYSTEM_PROMPT,
-            input=text,
-            tools=[{"type": "web_search_preview"}],
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": text},
+            ],
+            max_tokens=400,
         )
-        answer = (response.output_text or "").strip()
+        answer = (response.choices[0].message.content or "").strip()
         return answer or "Não consegui formular uma resposta agora."
     except Exception as e:
-        logger.error(f"Erro ao consultar o ChatGPT: {e}")
+        logger.error(f"Erro ao consultar o modelo ({AI_PROVIDER}): {e}")
+        if AI_PROVIDER == "local":
+            return "Tive um problema para pensar nessa resposta agora. O Ollama está rodando?"
         return "Tive um problema para buscar essa informação na internet agora."
 
 
