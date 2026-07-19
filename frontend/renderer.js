@@ -457,7 +457,63 @@ async function getMicStream() {
       channelCount: 1,
     },
   });
+  setupWaveform(micStream);
   return micStream;
+}
+
+// ---------------------------------------------------------------------
+// Indicador visual de voz (barrinhas azuis reagindo ao volume, estilo
+// Alexa) — confirma visualmente que o microfone está captando de verdade
+// ---------------------------------------------------------------------
+const waveformCanvas = document.getElementById("voiceWaveform");
+const waveformCtx = waveformCanvas.getContext("2d");
+let analyser = null;
+let waveformDataArray = null;
+let waveformRunning = false;
+
+function setupWaveform(stream) {
+  const source = audioCtx.createMediaStreamSource(stream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 64;
+  waveformDataArray = new Uint8Array(analyser.frequencyBinCount);
+  source.connect(analyser);
+  // Não conecta no destination — é só pra análise, não deve tocar o
+  // próprio áudio do microfone de volta pro usuário.
+  drawWaveform();
+}
+
+function setWaveformActive(active) {
+  waveformRunning = active;
+  waveformCanvas.classList.toggle("active", active);
+}
+
+function drawWaveform() {
+  requestAnimationFrame(drawWaveform);
+  if (!analyser) return;
+
+  const w = waveformCanvas.width = 60;
+  const h = waveformCanvas.height = 28;
+  waveformCtx.clearRect(0, 0, w, h);
+  if (!waveformRunning) return;
+
+  analyser.getByteFrequencyData(waveformDataArray);
+  const barCount = 7;
+  const barWidth = 5;
+  const gap = 3;
+  const totalWidth = barCount * barWidth + (barCount - 1) * gap;
+  let x = (w - totalWidth) / 2;
+
+  for (let i = 0; i < barCount; i++) {
+    const idx = Math.floor((i / barCount) * waveformDataArray.length);
+    const level = waveformDataArray[idx] / 255;
+    const barHeight = Math.max(3, level * h);
+    const y = (h - barHeight) / 2;
+    waveformCtx.fillStyle = "rgba(62, 201, 255, 0.9)";
+    waveformCtx.shadowColor = "rgba(62, 201, 255, 0.8)";
+    waveformCtx.shadowBlur = 4;
+    waveformCtx.fillRect(x, y, barWidth, barHeight);
+    x += barWidth + gap;
+  }
 }
 
 // Bitrate mais alto pra não perder qualidade da fala na compressão
@@ -482,8 +538,12 @@ async function recordFor(milliseconds) {
   const chunks = [];
   recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
+  setWaveformActive(true);
   return new Promise((resolve) => {
-    recorder.onstop = () => resolve(new Blob(chunks, { type: "audio/webm" }));
+    recorder.onstop = () => {
+      setWaveformActive(false);
+      resolve(new Blob(chunks, { type: "audio/webm" }));
+    };
     recorder.start();
     setTimeout(() => {
       if (recorder.state !== "inactive") recorder.stop();
@@ -508,6 +568,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       mediaRecorder.onstop = async () => {
         isRecording = false;
         micBtn.classList.remove("listening");
+        setWaveformActive(false);
         const blob = new Blob(chunks, { type: "audio/webm" });
         try {
           const text = await transcribeBlob(blob);
@@ -517,6 +578,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         }
       };
       mediaRecorder.start();
+      setWaveformActive(true);
       // Grava no máximo 8 segundos automaticamente, caso o usuário
       // esqueça de clicar de novo pra parar
       setTimeout(() => {
@@ -525,6 +587,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     } catch (err) {
       isRecording = false;
       micBtn.classList.remove("listening");
+      setWaveformActive(false);
       console.warn("Não consegui acessar o microfone:", err);
     }
   });
