@@ -577,6 +577,7 @@ async function wakeListenLoop() {
       const blob = await recordFor(chunkDuration);
       if (!wakeShouldRun) break;
       const transcript = await transcribeBlob(blob);
+      console.log('[Eco escuta] ouvi:', JSON.stringify(transcript));
       if (!transcript) continue;
 
       if (awaitingCommand) {
